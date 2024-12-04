@@ -4,6 +4,9 @@ PRÁCTICA PRIMER TRIMESTRE DESPLIEGUE DE APLICACIONES WEB - MIGUEL ÁNGEL GRANDE
 
 
 REALIZACIÓN DE LA TAREA
+
+
+SERVIDOR 1 - APACHE
 _____________________________________________________________________________________________
 
 Lo primero que voy a hacer es actualizar el sistema con
@@ -280,7 +283,12 @@ sudo systemctl restart apache2
 
 ![image](https://github.com/user-attachments/assets/b023f119-432a-45f7-9ab4-b6399d0daacb)
 
-Una vez realizado los pasos anteriores, comencé a instalar AWStats para poder llevar a cabo la autenticación en el archivo Python
+
+
+__________________________________________________________________________________________
+
+
+Una vez realizado los pasos anteriores, comencé a instalar AWStats
 
 sudo apt install awstats -y
 
@@ -310,6 +318,13 @@ Dentro del archivo debemos introducir la siguiente línea
 
 ![image](https://github.com/user-attachments/assets/35677b42-bf3b-4ae9-b045-6e7560cf73f0)
 
+Ahora accedo a Awstats con la siguiente dirección en el navegador:
+http://centro.intranet/cgi-bin/awstats.pl?config=centro.intranet
+![image](https://github.com/user-attachments/assets/0744f370-04d1-4bde-a6f1-357ddba06cb7)
+
+
+__________________________________________________________________________________________
+
 
 Y listo, ahora poseemos dos direcciones en nuestro VirtualHosts, una (http://centro.intranet) que posee Wordpress,
 
@@ -322,9 +337,163 @@ y otra (http://departamentos.centro.intranet) que posee una autenticación para 
 
 Si inicio sesión, me saldrá mi archivo python.
 
-
-
 ![image](https://github.com/user-attachments/assets/892d6eb0-edcb-4f76-9cb1-2161e8da2fcc)
 
+Y Acceder a Awstats mediante
+
+http://centro.intranet/cgi-bin/awstats.pl?config=centro.intranet
+![image](https://github.com/user-attachments/assets/3c96e95a-66a7-455e-9c62-9d636f71d843)
+
+
+
+SERVIDOR 2 - Nginx
+_________________________________________________________________________________________________
+
+El primer paso de todos es instalar el servidor Nginx
+
+sudo apt install nginx
+
+![image](https://github.com/user-attachments/assets/346d464f-9e92-4904-a519-c4f0218f3872)
+
+El siguiente paso es configurar nginx para el dominio y el puerto que me indica en el ejercicio con
+
+sudo nano /etc/nginx/sites-available/servidor2.centro.intranet
+
+![image](https://github.com/user-attachments/assets/effc0868-8bd4-4d0a-a2aa-c2e03a850559)
+
+Debo agregar lo siguiente 
+
+server {
+    listen 8080;
+    server_name servidor2.centro.intranet;
+    root /var/www/servidor2;
+    index index.php index.html index.htm;
+    location / {
+        try_files $uri $uri/ =404;
+    }
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+   location ~ /\.ht {
+        deny all;
+    }
+}
+
+![image](https://github.com/user-attachments/assets/1aad2244-e226-4c20-918f-2171be43c725)
+
+
+Seguimos con la creación del directorio raíz para el sitio web
+
+sudo mkdir -p /var/www/servidor2
+
+y sus respectivos permisos
+
+sudo chown -R www-data:www-data /var/www/servidor2
+sudo chmod -R 755 /var/www/servidor2
+
+![image](https://github.com/user-attachments/assets/11e671e6-efcd-48dc-81c4-a5e52c692f77)
+
+Y habilito la configuración del sitio 
+
+sudo ln -s /etc/nginx/sites-available/servidor2.centro.intranet /etc/nginx/sites-enabled/
+
+![image](https://github.com/user-attachments/assets/750ee614-538b-448b-b7cc-0a0bf4780980)
+
+Y pruebo la configuración por si da errores con 
+
+sudo nginx -t
+
+![image](https://github.com/user-attachments/assets/78aa9260-4b46-4b0f-889b-b5c415ef22a4)
+
+
+Reinicio nginx
+
+sudo systemctl restart nginx
+
+![image](https://github.com/user-attachments/assets/744dbee9-684d-4c3f-88d3-9032ffe4cc88)
+
+Lo siguiente es instalar PHP y PHP-FPM sencillamente con 
+
+sudo apt install php php-fpm php-mysql
+
+
+![image](https://github.com/user-attachments/assets/b49e2f81-24ee-40d4-99d9-715525e6ff48)
+
+Y me aseguro de si está en ejecución
+
+sudo systemctl start php8.3-fpm
+sudo systemctl enable php8.3-fpm
+
+![image](https://github.com/user-attachments/assets/5701c1fe-16bf-41f0-9880-a72f777eda7b)
+
+
+Una vez hecho esto, toca instalar phpMyAdmin con 
+sudo apt install phpmyadmin
+y durante la instalación nos da a elegir un servidor web (NGINX NO APARECERÁ) así que elegiré apache2
+
+![image](https://github.com/user-attachments/assets/43ef0640-9503-4f3d-b474-5f20663c80d1)
+
+Y configuraré phpmyadmin creando un enlace simbólico en el directorio de nginx 
+
+sudo ln -s /usr/share/phpmyadmin /var/www/servidor2/phpmyadmin
+
+![image](https://github.com/user-attachments/assets/9dc7590d-3eec-4491-9301-ccca07cabc1e)
+
+A continuación, hare que nginx pueda servir archivos de phpmyadmin agregando "location" dentro de server{}
+
+location /phpmyadmin {
+    alias /usr/share/phpmyadmin;
+    index index.php index.html index.htm;
+    location ~ ^/phpmyadmin/(.*\.php)$ {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}
+
+![image](https://github.com/user-attachments/assets/fc8cf9c3-675f-43fd-9923-91ff7d2a022e)
+
+
+Una vez colocado "location" guardo y reinicio nginx
+
+sudo systemctl restart nginx
+
+![image](https://github.com/user-attachments/assets/57b3eeb7-355f-4ab9-a78b-362a078b2b2b)
+
+Por último, configuraré el archivo hosts y meteré un php de prueba para ver que todo funciona correctamente
+
+sudo nano /etc/hosts
+
+y agrego la ruta
+
+127.0.0.1 servidor2.centro.intranet
+
+![image](https://github.com/user-attachments/assets/b28bfe71-8bfc-493d-9a53-ca847fd09acf)
+
+Crearé el archivo de prueba de php 
+
+sudo nano /var/www/servidor2/helloworld.php
+
+
+
+Y haré otro Hello World igual al del archivo PYTHON
+
+![image](https://github.com/user-attachments/assets/2bf47186-6d14-4dfd-9a66-d28c05e04c33)
+
+Listo, con esto e introduciendo en el navegador http://servidor2.centro.intranet:8080/helloworld.php debería de funcionar mi helloworld.php
+
+![image](https://github.com/user-attachments/assets/1207fc3d-5b8b-4f1c-81b7-9de49b2421c8)
+
+Y lo mismo si quiero acceder simplemente a phpMyadmin, me dirijo a http://servidor2.centro.intranet:8080/phpmyadmin/
+
+![image](https://github.com/user-attachments/assets/ec657801-5681-4b31-8e60-5fc7d2414ab8)
+
+Con esto, se da por terminado mi proyecto de primer trimestre de DAW
+
+_______________________________________________________________________________________
 
 TRABAJO REALIZADO POR MIGUEL ÁNGEL GRANDE SÁNCHEZ
