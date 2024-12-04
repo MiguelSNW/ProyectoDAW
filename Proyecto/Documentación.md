@@ -68,14 +68,23 @@ Creé un archivo de configuración de Virtual Hosts para cada dominion con
 sudo nano /etc/apache2/sites-available/centro.intranet.conf
 y agrego la siguiente directiva 
 <VirtualHost *:80>
+
     ServerName centro.intranet
+    
     DocumentRoot /var/www/centro.intranet
+    
     <Directory /var/www/centro.intranet>
+    
         AllowOverride All
+        
     </Directory>
+    
     ErrorLog ${APACHE_LOG_DIR}/centro.intranet-error.log
+    
     CustomLog ${APACHE_LOG_DIR}/centro.intranet-access.log combined
+    
 </VirtualHost>
+
 
 ![image](https://github.com/user-attachments/assets/2972f3da-b077-4068-a760-bf95d817c813)
 
@@ -83,15 +92,25 @@ Para departamentos.centro.intranet
 
 sudo nano /etc/apache2/sites-available/departamentos.centro.intranet.conf
 y agrego la siguiente directiva
+
 <VirtualHost *:80>
+
     ServerName departamentos.centro.intranet
+    
     DocumentRoot /var/www/departamentos.centro.intranet
+    
     <Directory /var/www/departamentos.centro.intranet>
+    
         AllowOverride All
+        
     </Directory>
+    
     ErrorLog ${APACHE_LOG_DIR}/departamentos.centro.intranet-error.log
+    
     CustomLog ${APACHE_LOG_DIR}/departamentos.centro.intranet-access.log combined
+    
 </VirtualHost>
+
 
 ![image](https://github.com/user-attachments/assets/0bf617ce-1b14-4013-b633-ce902085af9a)
 
@@ -187,9 +206,13 @@ Y edito el archivo wp-config.php para agregar la información a la base de datos
 Hay que buscar las siguientes líneas y actualizar con mis datos
 
 define('DB_NAME', 'wordpress');
+
 define('DB_USER', 'root');
+
 define('DB_PASSWORD', 'root');
+
 define('DB_HOST', 'localhost');
+
 
 ![image](https://github.com/user-attachments/assets/8487ba4a-9942-484d-ba07-a6bf422b71fd)
 
@@ -212,10 +235,15 @@ sudo nano /var/www/departamentos.centro.intranet/app.wsgi
 Una vez dentro, agregaré el contenido descrito anteriormente:
 
 def application(environ, start_response):
+
     status = '200 OK'
+    
     headers = [('Content-type', 'text/plain; charset=utf-8')]
+    
     start_response(status, headers)
+    
     return [b'Hello World']
+    
 
 ![image](https://github.com/user-attachments/assets/5f5219c4-171d-4a87-a465-0e11652c4e1c)
 
@@ -224,13 +252,21 @@ Ahora hay que terminar de configurar apache2 para que aparezca mi aplicación en
 sudo nano /etc/apache2/sites-available/departamentos.centro.intranet.conf
 
 <VirtualHost *:80>
+
     ServerName departamentos.centro.intranet
+    
     WSGIScriptAlias / /var/www/departamentos.centro.intranet/app.wsgi
+    
     <Directory /var/www/departamentos.centro.intranet>
+    
         Require all granted
+        
     </Directory>
+    
     ErrorLog ${APACHE_LOG_DIR}/departamentos.centro.intranet-error.log
+    
     CustomLog ${APACHE_LOG_DIR}/departamentos.centro.intranet-access.log combined
+    
 </VirtualHost>
 
 ![image](https://github.com/user-attachments/assets/6dadee65-793c-4a2f-8ea2-3db4f958bf2b)
@@ -270,9 +306,13 @@ sudo htpasswd -c /etc/apache2/.htpasswd usuario  (ESTO CREA EL USUARIO "usuario"
 Ahora, dentro del archivo de configuración donde se encuentra el archivo python se deben escribir las siguientes líneas dentro de <VirtualHost>
 
 AuthType Basic
+
 AuthName "Restricted Access"
+
 AuthUser File /etc/apache2/.htpasswd
+
 Require valid-user
+
 
 ![image](https://github.com/user-attachments/assets/7eabd1ac-dbd4-4783-ab79-e014c9ba7f30)
 
@@ -364,22 +404,38 @@ sudo nano /etc/nginx/sites-available/servidor2.centro.intranet
 Debo agregar lo siguiente 
 
 server {
+
     listen 8080;
+    
     server_name servidor2.centro.intranet;
+    
     root /var/www/servidor2;
+    
     index index.php index.html index.htm;
+
     location / {
+    
         try_files $uri $uri/ =404;
+        
     }
     location ~ \.php$ {
+    
         include snippets/fastcgi-php.conf;
+        
         fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        
         include fastcgi_params;
+        
     }
+    
    location ~ /\.ht {
+   
         deny all;
+        
     }
+    
 }
 
 ![image](https://github.com/user-attachments/assets/1aad2244-e226-4c20-918f-2171be43c725)
@@ -445,14 +501,23 @@ sudo ln -s /usr/share/phpmyadmin /var/www/servidor2/phpmyadmin
 A continuación, hare que nginx pueda servir archivos de phpmyadmin agregando "location" dentro de server{}
 
 location /phpmyadmin {
+
     alias /usr/share/phpmyadmin;
+    
     index index.php index.html index.htm;
+    
     location ~ ^/phpmyadmin/(.*\.php)$ {
+    
         fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        
         fastcgi_index index.php;
+        
         include fastcgi_params;
+        
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        
     }
+    
 }
 
 ![image](https://github.com/user-attachments/assets/fc8cf9c3-675f-43fd-9923-91ff7d2a022e)
