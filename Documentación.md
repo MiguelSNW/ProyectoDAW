@@ -1,4 +1,10 @@
-PUNTO 1 - Instalación del servidor web apache. Usaremos dos dominios mediante el archivo hosts: centro.intranet y departamentos.centro.intranet. El primero servirá el contenido mediante wordpress y el segundo una aplicación en Python.
+PRÁCTICA PRIMER TRIMESTRE DESPLIEGUE DE APLICACIONES WEB - MIGUEL ÁNGEL GRANDE SÁNCHEZ
+
+![image](https://github.com/user-attachments/assets/84cbe262-e34c-428e-bdc8-6183ae81387d)
+
+
+REALIZACIÓN DE LA TAREA
+_____________________________________________________________________________________________
 
 Lo primero que voy a hacer es actualizar el sistema con
 
